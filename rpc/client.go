@@ -627,7 +627,7 @@ func (c *Client) reconnect(ctx context.Context) error {
 	}
 	newconn, err := c.reconnectFunc(ctx)
 	if err != nil {
-		log.Trace("RPC client reconnect failed", "err", err)
+		log.Warn("RPC client reconnect failed", "err", err)
 		return err
 	}
 	select {
@@ -669,6 +669,9 @@ func (c *Client) dispatch(codec ServerCodec) {
 
 		// Read path:
 		case op := <-c.readOp:
+			if len(op.msgs) > 0 {
+				log.Warn("RPC readOp", "op.batch", op.batch, "len(op.msgs)", len(op.msgs), "op.msgs[0].Method", op.msgs[0].Method)
+			}
 			if op.batch {
 				conn.handler.handleBatch(op.msgs)
 			} else {
@@ -676,13 +679,13 @@ func (c *Client) dispatch(codec ServerCodec) {
 			}
 
 		case err := <-c.readErr:
-			conn.handler.log.Debug("RPC connection read error", "err", err)
+			conn.handler.log.Warn("RPC connection read error", "err", err)
 			conn.close(err, lastOp)
 			reading = false
 
 		// Reconnect:
 		case newcodec := <-c.reconnected:
-			log.Debug("RPC client reconnected", "reading", reading, "conn", newcodec.remoteAddr())
+			log.Warn("RPC client reconnected", "reading", reading, "conn", newcodec.remoteAddr())
 			if reading {
 				// Wait for the previous read loop to exit. This is a rare case which
 				// happens if this loop isn't notified in time after the connection breaks.

@@ -400,7 +400,7 @@ func (h *handler) handleResponses(batch []*jsonrpcMessage, handleCall func(*json
 	handleResp := func(msg *jsonrpcMessage) {
 		op := h.respWait[string(msg.ID)]
 		if op == nil {
-			h.log.Debug("Unsolicited RPC response", "reqid", idForLog{msg.ID})
+			h.log.Warn("Unsolicited RPC response", "reqid", idForLog{msg.ID})
 			return
 		}
 		resolvedops = append(resolvedops, op)
@@ -432,7 +432,7 @@ func (h *handler) handleResponses(batch []*jsonrpcMessage, handleCall func(*json
 		switch {
 		case msg.isResponse():
 			handleResp(msg)
-			h.log.Trace("Handled RPC response", "reqid", idForLog{msg.ID}, "duration", time.Since(start))
+			h.log.Warn("Handled RPC response", "reqid", idForLog{msg.ID}, "duration", time.Since(start))
 
 		case msg.isNotification():
 			if strings.HasSuffix(msg.Method, notificationMethodSuffix) {
@@ -461,7 +461,7 @@ func (h *handler) handleSubscriptionResult(msg *jsonrpcMessage) {
 	}
 	var result subscriptionResult
 	if err := json.Unmarshal(msg.Params, &result); err != nil {
-		h.log.Debug("Dropping invalid subscription message")
+		h.log.Warn("Dropping invalid subscription message")
 		return
 	}
 	if h.clientSubs[result.ID] != nil {
@@ -487,7 +487,7 @@ func (h *handler) handleCallMsgInner(ctx *callProc, msg *jsonrpcMessage) *jsonrp
 	switch {
 	case msg.isNotification():
 		h.handleCall(ctx, msg)
-		h.log.Debug("Served "+msg.Method, "duration", time.Since(start))
+		h.log.Warn("Served "+msg.Method, "duration", time.Since(start))
 		return nil
 
 	case msg.isCall():
@@ -501,7 +501,7 @@ func (h *handler) handleCallMsgInner(ctx *callProc, msg *jsonrpcMessage) *jsonrp
 			}
 			h.log.Warn("Served "+msg.Method, logctx...)
 		} else {
-			h.log.Debug("Served "+msg.Method, logctx...)
+			h.log.Warn("Served "+msg.Method, logctx...)
 		}
 		return resp
 
