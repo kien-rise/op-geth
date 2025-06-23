@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -346,6 +347,13 @@ func (c *Client) CallContext(ctx context.Context, result interface{}, method str
 	msg, err := c.newMessage(method, args...)
 	if err != nil {
 		return err
+	}
+	if !c.isHTTP {
+		log.Warn("Client::CallContext", "msg.ID", msg.ID, "method", method)
+	}
+	if (idForLog{msg.ID}).String() == "10000" {
+		log.Warn("a67a0d58-8e6a-46ac-9f04-9461d8f09dac")
+		debug.PrintStack()
 	}
 	var recordDone RecordDone
 	if c.recorder != nil {
@@ -670,7 +678,7 @@ func (c *Client) dispatch(codec ServerCodec) {
 		// Read path:
 		case op := <-c.readOp:
 			if len(op.msgs) > 0 {
-				log.Warn("RPC readOp", "op.batch", op.batch, "len(op.msgs)", len(op.msgs), "op.msgs[0].Method", op.msgs[0].Method)
+				log.Warn("RPC readOp", "op.batch", op.batch, "len(op.msgs)", len(op.msgs), "op.msgs[0].Method", op.msgs[0].Method, "op.msgs[0].ID", op.msgs[0].ID)
 			}
 			if op.batch {
 				conn.handler.handleBatch(op.msgs)
