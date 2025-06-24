@@ -27,6 +27,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -157,7 +158,18 @@ func newClientTransportHTTP(endpoint string, cfg *clientConfig) reconnectFunc {
 	client := cfg.httpClient
 	if client == nil {
 		log.Info("newClientTransportHTTP", "endpoint", endpoint)
-		client = new(http.Client) // HERE: inspect this
+
+		transport := &http.Transport{
+			MaxIdleConns:        runtime.NumCPU() * 2,
+			MaxIdleConnsPerHost: runtime.NumCPU() * 2,
+			IdleConnTimeout:     90 * time.Second,
+			ReadBufferSize:      64 * 1024, // 64KB
+			WriteBufferSize:     64 * 1024, // 64KB
+		}
+
+		client = &http.Client{
+			Transport: transport,
+		}
 	}
 
 	hc := &httpConn{
