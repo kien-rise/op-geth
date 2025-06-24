@@ -30,6 +30,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/log"
 )
 
 const (
@@ -123,6 +125,7 @@ var DefaultHTTPTimeouts = HTTPTimeouts{
 
 // DialHTTP creates a new RPC client that connects to an RPC server over HTTP.
 func DialHTTP(endpoint string) (*Client, error) {
+	log.Info("DialHTTP", "endpoint", endpoint)
 	return DialHTTPWithClient(endpoint, new(http.Client))
 }
 
@@ -153,7 +156,8 @@ func newClientTransportHTTP(endpoint string, cfg *clientConfig) reconnectFunc {
 
 	client := cfg.httpClient
 	if client == nil {
-		client = new(http.Client)
+		log.Info("newClientTransportHTTP", "endpoint", endpoint)
+		client = new(http.Client) // HERE: inspect this
 	}
 
 	hc := &httpConn{
